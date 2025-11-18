@@ -1,0 +1,50 @@
+# 用户需求调研模板
+# 适用场景：新产品开发前的需求调研
+
+questions:
+  - id: 1
+    question: "您好！我是需求调研专员。请问您是否愿意参与我们的新产品调研？"
+    type: "yesno"
+    
+  - id: 2
+    question: "很好！首先想了解一下，您目前在工作或生活中使用类似的产品吗？"
+    type: "yesno"
+    
+  - id: 3
+    question: "您主要用它们来做什么？可以说说具体的使用场景吗？"
+    type: "open"
+    
+  - id: 4
+    question: "在使用这些产品时，您觉得最方便的地方是什么？"
+    type: "open"
+    
+  - id: 5
+    question: "那有没有让您感到不方便或者痛点的地方？"
+    type: "open"
+    
+  - id: 6
+    question: "如果有一款新产品能解决这些痛点，您最希望它具备什么功能？"
+    type: "open"
+    
+  - id: 7
+    question: "您能接受的价格范围大概是多少？可以给个大致的区间。"
+    type: "open"
+    
+  - id: 8
+    question: "您更看重产品的哪些方面？比如价格、功能、易用性、品牌等？"
+    type: "open"
+    
+  - id: 9
+    question: "如果这样的产品推出了，您会考虑购买吗？"
+    type: "yesno"
+    
+  - id: 10
+    question: "最后，关于这类产品，您还有什么想法或建议吗？"
+    type: "open"
+
+settings:
+  welcome_message: "您好！我们正在开发一款新产品，想听听您的想法和需求。本次调研大约需要10分钟。您的意见对我们非常重要，感谢您的参与！"
+  completion_message: "非常感谢您的参与！您的需求和建议对我们的产品开发非常有价值。如果产品上线，我们会优先通知您。祝您生活愉快！"
+  save_audio: false
+  save_transcript: true
+

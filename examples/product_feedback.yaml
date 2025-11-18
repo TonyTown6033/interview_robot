@@ -1,0 +1,50 @@
+# 产品反馈访谈模板
+# 适用场景：收集用户对产品的使用体验和改进建议
+
+questions:
+  - id: 1
+    question: "您好！我是产品体验调研助手。首先请问，我可以怎么称呼您？"
+    type: "open"
+    
+  - id: 2
+    question: "感谢参与我们的调研！请问您使用我们的产品多长时间了？"
+    type: "open"
+    
+  - id: 3
+    question: "您主要使用产品的哪些功能？可以简单说几个。"
+    type: "open"
+    
+  - id: 4
+    question: "在这些功能中，您最满意的是哪一个？为什么？"
+    type: "open"
+    
+  - id: 5
+    question: "您觉得产品使用起来方便吗？有没有觉得不太好用的地方？"
+    type: "open"
+    
+  - id: 6
+    question: "如果用1到10分给产品打分，10分是非常满意，您会打几分？"
+    type: "open"
+    
+  - id: 7
+    question: "您在使用过程中遇到过什么问题或bug吗？"
+    type: "yesno"
+    
+  - id: 8
+    question: "如果可以的话，您最希望我们改进或增加什么功能？"
+    type: "open"
+    
+  - id: 9
+    question: "您会向朋友推荐我们的产品吗？"
+    type: "yesno"
+    
+  - id: 10
+    question: "最后，您还有什么想对我们说的吗？任何建议都可以。"
+    type: "open"
+
+settings:
+  welcome_message: "您好！感谢您参与我们的产品体验调研。本次访谈大约需要8-10分钟，您的反馈对我们非常重要。请放松，自然地回答就好。"
+  completion_message: "非常感谢您的宝贵意见！您的反馈将帮助我们做得更好。如果产品有新的改进，我们会第一时间通知您。祝您生活愉快！"
+  save_audio: false
+  save_transcript: true
+

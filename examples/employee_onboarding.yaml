@@ -1,0 +1,46 @@
+# 新员工入职访谈模板
+# 适用场景：HR 了解新员工入职体验
+
+questions:
+  - id: 1
+    question: "您好！我是HR部门的智能助手。欢迎加入我们公司！请问可以怎么称呼您？"
+    type: "open"
+    
+  - id: 2
+    question: "很高兴认识您！请问您入职多久了？"
+    type: "open"
+    
+  - id: 3
+    question: "入职培训的内容对您有帮助吗？有没有不太清楚的地方？"
+    type: "open"
+    
+  - id: 4
+    question: "您的团队同事对您友好吗？融入团队的感觉如何？"
+    type: "open"
+    
+  - id: 5
+    question: "工作环境和办公设施方面，您还满意吗？"
+    type: "open"
+    
+  - id: 6
+    question: "目前的工作内容和您入职前的期望一致吗？"
+    type: "open"
+    
+  - id: 7
+    question: "在工作中遇到问题时，能顺利得到帮助吗？"
+    type: "yesno"
+    
+  - id: 8
+    question: "您觉得公司还有哪些方面可以改进，让新员工更快适应？"
+    type: "open"
+    
+  - id: 9
+    question: "最后，您对公司和这份工作的整体感受如何？"
+    type: "open"
+
+settings:
+  welcome_message: "您好！欢迎加入我们的大家庭。为了帮助新员工更好地融入，我们想了解一下您的入职体验。本次访谈大约5分钟，请轻松回答。"
+  completion_message: "感谢您的反馈！我们会根据您的意见改进入职流程。如果在工作中有任何问题，随时可以联系HR。祝您工作顺利！"
+  save_audio: false
+  save_transcript: true
+

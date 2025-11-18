@@ -1,0 +1,47 @@
+# 客户问答采集 - 问题配置文件
+# 
+# 使用说明：
+# - 每个问题包含 id、question（问题内容）和 type（问题类型）
+# - type 可选：open（开放式）、yesno（是非题）、choice（选择题）
+# - 按顺序提问，系统会自动记录回答
+
+questions:
+  - id: 1
+    question: "您好！我是智能客服助手，今天想了解一下您对我们产品的使用体验。首先请问您贵姓？"
+    type: "open"
+    
+  - id: 2
+    question: "很高兴认识您！请问您使用我们的产品多长时间了？"
+    type: "open"
+    
+  - id: 3
+    question: "您对产品的整体满意度如何？可以用1到10分来评价吗？10分是非常满意。"
+    type: "open"
+    
+  - id: 4
+    question: "您最喜欢产品的哪个功能或特点？"
+    type: "open"
+    
+  - id: 5
+    question: "在使用过程中，您遇到过什么问题或困难吗？"
+    type: "open"
+    
+  - id: 6
+    question: "您希望我们在哪些方面进行改进？"
+    type: "open"
+    
+  - id: 7
+    question: "您会向朋友或同事推荐我们的产品吗？"
+    type: "yesno"
+    
+  - id: 8
+    question: "最后，您还有什么想补充或建议的吗？"
+    type: "open"
+
+# 配置选项
+settings:
+  welcome_message: "您好！欢迎参与我们的客户访谈。本次访谈大约需要5-10分钟，请放松回答即可。"
+  completion_message: "非常感谢您的宝贵反馈！您的意见对我们非常重要。祝您生活愉快！"
+  save_audio: true  # 是否保存音频
+  save_transcript: true  # 是否保存转写文本
+

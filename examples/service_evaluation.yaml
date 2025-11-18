@@ -1,0 +1,46 @@
+# 客户服务评价模板
+# 适用场景：售后服务质量评估
+
+questions:
+  - id: 1
+    question: "您好！我是客服质量回访专员。请问您最近有联系过我们的客服吗？"
+    type: "yesno"
+    
+  - id: 2
+    question: "请问您是通过什么渠道联系客服的？电话、在线客服还是其他方式？"
+    type: "open"
+    
+  - id: 3
+    question: "您当时遇到的是什么问题？可以简单描述一下吗？"
+    type: "open"
+    
+  - id: 4
+    question: "客服人员的响应速度如何？是否及时？"
+    type: "open"
+    
+  - id: 5
+    question: "客服人员的服务态度怎么样？是否礼貌、耐心？"
+    type: "open"
+    
+  - id: 6
+    question: "您的问题最终解决了吗？"
+    type: "yesno"
+    
+  - id: 7
+    question: "如果用1到10分评价本次客服体验，10分是非常满意，您会打几分？"
+    type: "open"
+    
+  - id: 8
+    question: "您觉得我们的客服服务有哪些地方需要改进？"
+    type: "open"
+    
+  - id: 9
+    question: "最后，您还有其他想反馈的吗？"
+    type: "open"
+
+settings:
+  welcome_message: "您好！我们正在进行客户服务质量回访。您的意见将帮助我们提升服务水平。本次回访大约需要5分钟，感谢您的配合。"
+  completion_message: "感谢您的宝贵意见！我们会认真对待每一条反馈，不断改进服务质量。如有任何问题，欢迎随时联系我们。祝您生活愉快！"
+  save_audio: false
+  save_transcript: true
+
