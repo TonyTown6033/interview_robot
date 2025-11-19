@@ -16,4 +16,5 @@ venv/
 *.mp3
 responses/
 sessions/
+tts_cache/
 

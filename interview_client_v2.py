@@ -264,34 +264,16 @@ class InterviewClientV2:
     def _update_instructions_for_question(self, question: Question):
         """为特定问题更新 instructions（方案A：指令驱动）"""
         
-        # 根据问题类型定制指令
-        if question.type == "yesno":
-            answer_guide = "这是一个是非题，用户通常会回答'是'、'否'或类似的答案。"
-        elif question.type == "choice":
-            answer_guide = "这是一个选择题，用户会选择其中一个选项。"
-        else:  # open
-            answer_guide = "这是一个开放式问题，请耐心倾听用户的完整回答。"
-        
-        # 构建针对当前问题的精确指令
-        instructions = f"""你是访谈助手，当前是第 {question.id} 个问题。
+        # 更简单直接的指令：只负责提问，不做其他事
+        instructions = f"""你是访谈助手。
 
-【步骤1：提问阶段】
-- 收到 [执行问题{question.id}] 信号后，用自然、友好的语气向用户提问
-- 必须完整地说出这个问题："{question.question}"
-- {answer_guide}
-- 提问后立即停止，等待用户回答
+你的任务：
+1. 收到提问请求时，用自然、友好的语气朗读给你的问题
+2. 朗读完后立即停止
+3. 不要修改、改编或添加任何内容
+4. 不要对用户的回答做任何反应
 
-【步骤2：确认阶段】
-- 收到 [用户已回答，请确认] 信号后，用简短的话确认
-- 例如："好的，我记录下来了" 或 "明白了，谢谢您"
-- 确认后立即停止
-
-【严格禁止】
-❌ 不要偏离问题内容
-❌ 不要自己编造问题
-❌ 不要追问或提出新问题
-❌ 不要总结或评论用户的回答
-❌ 不要在没收到信号时主动说话"""
+当前是第 {question.id} 个问题。"""
 
         # 发送更新指令
         config = {
@@ -415,8 +397,9 @@ class InterviewClientV2:
         print(f"\n{'='*60}")
         print(f"📝 进度: {progress}")
         print(f"💭 问题类型: {question.type}")
-        print(f"🤖 提问: {question.question}")
-        print(f"{'='*60}\n")
+        print(f"📋 预设问题: {question.question}")
+        print(f"{'='*60}")
+        print("🤖 AI 应该说: ", end="", flush=True)
         
         # 步骤1：确保前一个响应已完成，等待AI停止说话
         if self.is_ai_speaking:
@@ -428,18 +411,27 @@ class InterviewClientV2:
         self._update_instructions_for_question(question)
         time.sleep(0.5)  # 给足够时间让指令更新生效
         
-        # 步骤3：触发AI提问
+        # 步骤3：触发AI提问 - 使用最强约束
+        # 方法：在 response.create 中直接指定要说的话
+        response_instructions = f"""【强制要求】
+请完全按照以下文本朗读，不要有任何改动：
+
+{question.question}
+
+【严格禁止】
+- 禁止添加任何额外的话
+- 禁止改变措辞
+- 禁止解释或展开
+- 只朗读上面的文本，然后立即停止"""
+        
         self._send_event({
-            "type": "conversation.item.create",
-            "item": {
-                "type": "message",
-                "role": "user",
-                "content": [{"type": "input_text", "text": f"[执行问题{question.id}]"}]
+            "type": "response.create",
+            "response": {
+                "modalities": ["text", "audio"],
+                "instructions": response_instructions,
+                "temperature": 0.3  # 降低随机性
             }
         })
-        time.sleep(0.2)
-        
-        self._send_event({"type": "response.create"})
         
         # 步骤4：等待AI提问完成
         print("⏳ AI正在提问...")
@@ -453,30 +445,15 @@ class InterviewClientV2:
         if self.answer_received.wait(timeout):
             # 保存回答
             if self.current_transcript:
-                print(f"\n✅ 已记录回答")
+                print(f"\n✅ 已记录回答: {self.current_transcript}")
                 self.session_recorder.add_answer(
                     question_id=question.id,
                     question_text=question.question,
                     transcript=self.current_transcript
                 )
                 
-                # 步骤6：触发AI确认（"好的，我记录下来了"）
-                time.sleep(0.5)
-                self.ai_finished_speaking.clear()
-                self._send_event({
-                    "type": "conversation.item.create",
-                    "item": {
-                        "type": "message",
-                        "role": "user",
-                        "content": [{"type": "input_text", "text": "[用户已回答，请确认]"}]
-                    }
-                })
-                time.sleep(0.2)
-                self._send_event({"type": "response.create"})
-                
-                # 等待AI确认完成
-                self.ai_finished_speaking.wait(timeout=8)
-                time.sleep(0.8)  # 额外等待，确保完全结束
+                # 给一点时间让对话自然结束
+                time.sleep(1.0)
                 
                 self.waiting_for_answer = False
                 return True
@@ -583,6 +560,16 @@ class InterviewClientV2:
                     
                 elif event_type == "response.created":
                     self.is_ai_speaking = True
+                    
+                elif event_type == "response.text.delta":
+                    # 调试：显示 AI 实际说的文本
+                    text_delta = event.get("delta", "")
+                    if text_delta:
+                        print(text_delta, end="", flush=True)
+                        
+                elif event_type == "response.text.done":
+                    # 文本完成，换行
+                    print()  # 换行
                     
                 elif event_type == "response.audio.delta":
                     if self.is_ai_speaking and not self.user_speaking:
