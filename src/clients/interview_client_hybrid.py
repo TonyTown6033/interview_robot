@@ -79,11 +79,9 @@ class TTSGenerator:
             }
 
             # 阶跃星辰 TTS API 参数格式（参考官方文档）
-            data = {"model": self.tts_model,
-                    "input": text, "voice": self.tts_voice}
+            data = {"model": self.tts_model, "input": text, "voice": self.tts_voice}
 
-            response = requests.post(
-                TTS_URL, headers=headers, json=data, timeout=30)
+            response = requests.post(TTS_URL, headers=headers, json=data, timeout=30)
 
             if response.status_code == 200:
                 # 保存音频文件
@@ -175,16 +173,14 @@ class AudioRecorder:
                 frames_per_buffer=CHUNK_SIZE,
             )
             self.recording = True
-            self.record_thread = threading.Thread(
-                target=self._record_loop, daemon=True)
+            self.record_thread = threading.Thread(target=self._record_loop, daemon=True)
             self.record_thread.start()
 
     def _record_loop(self):
         """录制循环"""
         while self.recording:
             try:
-                audio_data = self.stream.read(
-                    CHUNK_SIZE, exception_on_overflow=False)
+                audio_data = self.stream.read(CHUNK_SIZE, exception_on_overflow=False)
                 self.audio_queue.put(audio_data)
             except Exception as e:
                 if self.recording:
@@ -351,10 +347,8 @@ class HybridInterviewClient:
         self.recorder.start()
 
         # 启动接收和发送线程
-        self.receive_thread = threading.Thread(
-            target=self._receive_loop, daemon=True)
-        self.send_thread = threading.Thread(
-            target=self._send_loop, daemon=True)
+        self.receive_thread = threading.Thread(target=self._receive_loop, daemon=True)
+        self.send_thread = threading.Thread(target=self._send_loop, daemon=True)
 
         self.receive_thread.start()
         self.send_thread.start()
@@ -427,8 +421,7 @@ class HybridInterviewClient:
         print(f"{'=' * 60}\n")
 
         # 步骤1：播放 TTS 生成的问题音频
-        audio_file = self.tts_generator.cache_dir / \
-            f"question_{question.id}.mp3"
+        audio_file = self.tts_generator.cache_dir / f"question_{question.id}.mp3"
         if audio_file.exists():
             print("🔊 播放问题...")
             self.player.play_file(audio_file)
@@ -514,8 +507,7 @@ class HybridInterviewClient:
                 return
 
             # 格式化报告
-            formatted_report = self.health_analyzer.format_report(
-                analysis_result)
+            formatted_report = self.health_analyzer.format_report(analysis_result)
 
             # 显示报告
             print("\n" + formatted_report)
@@ -540,8 +532,7 @@ class HybridInterviewClient:
                 audio_data = self.recorder.get_audio()
                 if audio_data:
                     encoded = base64.b64encode(audio_data).decode("ascii")
-                    event = {"type": "input_audio_buffer.append",
-                             "audio": encoded}
+                    event = {"type": "input_audio_buffer.append", "audio": encoded}
                     self._send_event(event)
                 else:
                     time.sleep(0.01)

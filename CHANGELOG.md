@@ -1,5 +1,163 @@
 # 更新日志
 
+## [Logging Enhancement v1.1.0] - 2025-11-22 深夜
+
+### 🎯 日志系统改进
+
+#### 1. Print → Logger 迁移
+**改进**: 将所有 print 语句替换为专业的 logging 系统
+
+**变更**:
+- ✅ 替换 120+ 处 print 语句为 logger 调用
+- ✅ 修复 12 处 f-string 格式问题
+- ✅ 实现分级日志（INFO/WARNING/ERROR/DEBUG）
+- ✅ 控制台显示简洁信息（INFO+）
+- ✅ 文件记录详细调试（DEBUG+）
+- ✅ 自动创建带时间戳的日志文件：`logs/interview_YYYYMMDD_HHMMSS.log`
+
+**影响文件**: `src/clients/interview_client_rag.py`
+
+#### 2. 转录验证增强（修复"未回答就跳过"问题）
+**问题**: 用户反馈"有时候我还没回答问题就到了下一个问题"
+
+**根本原因**:
+1. 未验证转录文本有效性
+2. 接受过短的转录（VAD 误触发）
+3. 缺少调试信息追踪问题
+
+**修复**:
+- ✅ 添加转录文本 `.strip()` 处理
+- ✅ **最小长度验证**：拒绝少于 2 字符的转录（关键修复！）
+- ✅ 空转录检测和拒绝
+- ✅ 状态检查日志（`waiting_for_answer` 状态）
+- ✅ 详细的调试日志追踪转录接收流程
+- ✅ 改进警告信息，明确说明被忽略的原因
+
+**位置**: `src/clients/interview_client_rag.py:800-823`
+
+#### 3. 调试日志增强
+
+新增 10+ 处关键调试日志：
+
+**问答流程**:
+```python
+logger.debug(f"🔧 初始化问题状态: waiting_for_answer=True")
+logger.debug(f"⏳ 开始等待用户回答（超时：{timeout}秒）...")
+logger.debug(f"📨 收到 answer_received 事件，当前转录: '{self.current_transcript}'")
+logger.debug(f"🔧 重置状态: waiting_for_answer=False")
+```
+
+**转录处理**:
+```python
+logger.debug(f"📝 收到转录: '{transcript}' (长度: {len(transcript)} 字符)")
+logger.debug(f"   当前状态 - waiting_for_answer: {self.waiting_for_answer}")
+logger.debug(f"✅ 设置 answer_received 事件")
+logger.debug(f"⏭️  当前不在等待回答状态，忽略转录: '{transcript}'")
+```
+
+**位置**: `src/clients/interview_client_rag.py` 多处
+
+### 📄 新增文档
+
+- `LOGGING_AND_DEBUGGING_IMPROVEMENTS.md` - 详细的日志改进文档
+
+### 📊 改进效果
+
+| 方面 | 改进前 | 改进后 |
+|------|--------|--------|
+| 日志系统 | print 语句混乱 | ✅ 分级专业日志 |
+| 调试能力 | 无调试信息 | ✅ 详细 DEBUG 日志 |
+| 转录验证 | 接受所有转录 | ✅ 严格验证（长度、非空） |
+| 问题诊断 | 难以追踪 | ✅ 完整状态跟踪 |
+| 日志持久化 | 无 | ✅ 自动保存到文件 |
+| 误触发防护 | 无 | ✅ 拒绝过短转录 |
+
+### 🔍 日志级别说明
+
+- **INFO** (控制台 + 文件): 用户可见的重要信息、进度、状态
+- **WARNING** (控制台 + 文件): 潜在问题、被拒绝的操作
+- **ERROR** (控制台 + 文件): 错误情况、失败的操作
+- **DEBUG** (仅文件): 详细的内部状态、变量值、事件追踪
+
+### 🚀 使用示例
+
+#### 查看实时日志
+```bash
+python run_rag_interview.py
+```
+
+#### 查看详细调试日志
+```bash
+tail -f logs/interview_20251122_*.log
+```
+
+#### 过滤特定问题
+```bash
+# 查找所有被拒绝的转录
+grep "忽略" logs/interview_*.log
+
+# 查找所有警告
+grep "WARNING" logs/interview_*.log
+```
+
+### 🐛 Bug 修复验证
+
+#### 测试场景：短转录拦截
+
+**预期行为**:
+```
+# 日志文件中
+17:27:45 - RAGInterview - DEBUG - 📝 收到转录: '嗯' (长度: 1 字符)
+17:27:45 - RAGInterview - WARNING - ⚠️  转录文本过短 (1 字符)，可能是误触发，忽略: '嗯'
+```
+
+✅ 短转录被正确拦截，不会触发 `answer_received`
+
+---
+
+## [Bug Fix v1.0.1] - 2025-11-22 晚
+
+### 🐛 Bug 修复
+
+#### 1. 追问计数混淆问题
+**问题**: 用户反馈"追问会计数到问题里"，虽然代码逻辑正确，但显示不够清晰
+
+**修复**:
+- ✅ 改进追问提示信息，明确标注"属于当前问题的一部分"
+- ✅ 完善统计报告，区分"主问题数"和"追问次数"
+- ✅ 添加说明文字，解释主问题和追问的区别
+
+**影响文件**: `src/clients/interview_client_rag.py`
+
+#### 2. 连接不稳定问题
+**问题**: 连接不稳定时容易崩溃，一次错误就终止程序
+
+**修复**:
+- ✅ 发送循环添加错误重试机制（最多 5 次）
+- ✅ 接收循环添加心跳检测（30 秒超时提示）
+- ✅ 改进错误处理，区分不同类型错误
+- ✅ WebSocket 关闭后尝试恢复
+- ✅ JSON 解析错误不中断程序
+- ✅ 特殊处理"ongoing response"错误
+
+**影响文件**: `src/clients/interview_client_rag.py`
+
+### 📄 新增文档
+
+- `BUGFIX_FOLLOWUP_CONNECTION.md` - 详细的 Bug 修复文档
+
+### 📊 改进效果
+
+| 方面 | 改进前 | 改进后 |
+|------|--------|--------|
+| 追问显示 | 不明确 | ✅ 清晰标注 |
+| 统计报告 | 可能混淆 | ✅ 明确区分 |
+| 连接稳定性 | 一次错误就崩溃 | ✅ 自动重试 3-5 次 |
+| 心跳检测 | 无 | ✅ 30 秒超时提示 |
+| 错误提示 | 不友好 | ✅ 详细的错误类型和建议 |
+
+---
+
 ## [RAG Enhancement] - 2025-11-22
 
 ### 🎉 新功能

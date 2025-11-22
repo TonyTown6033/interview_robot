@@ -68,8 +68,7 @@ class AudioPlayer:
                 frames_per_buffer=CHUNK_SIZE,
             )
             self.playing = True
-            self.play_thread = threading.Thread(
-                target=self._play_loop, daemon=True)
+            self.play_thread = threading.Thread(target=self._play_loop, daemon=True)
             self.play_thread.start()
 
     def _play_loop(self):
@@ -139,15 +138,13 @@ class AudioRecorder:
                 frames_per_buffer=CHUNK_SIZE,
             )
             self.recording = True
-            self.record_thread = threading.Thread(
-                target=self._record_loop, daemon=True)
+            self.record_thread = threading.Thread(target=self._record_loop, daemon=True)
             self.record_thread.start()
 
     def _record_loop(self):
         while self.recording:
             try:
-                audio_data = self.stream.read(
-                    CHUNK_SIZE, exception_on_overflow=False)
+                audio_data = self.stream.read(CHUNK_SIZE, exception_on_overflow=False)
                 self.audio_queue.put(audio_data)
             except Exception as e:
                 if self.recording:
@@ -280,8 +277,7 @@ class InterviewClientV2:
 当前是第 {question.id} 个问题。"""
 
         # 发送更新指令
-        config = {"type": "session.update",
-                  "session": {"instructions": instructions}}
+        config = {"type": "session.update", "session": {"instructions": instructions}}
         self._send_event(config)
         print(f"🔄 已更新指令 [问题 {question.id}]")
 
@@ -321,10 +317,8 @@ class InterviewClientV2:
         self.recorder.start()
 
         # 启动接收和发送线程
-        self.receive_thread = threading.Thread(
-            target=self._receive_loop, daemon=True)
-        self.send_thread = threading.Thread(
-            target=self._send_loop, daemon=True)
+        self.receive_thread = threading.Thread(target=self._receive_loop, daemon=True)
+        self.send_thread = threading.Thread(target=self._send_loop, daemon=True)
 
         self.receive_thread.start()
         self.send_thread.start()
@@ -363,8 +357,7 @@ class InterviewClientV2:
 说完后立即停止，等待下一步指令。"""
 
         self._send_event(
-            {"type": "session.update", "session": {
-                "instructions": temp_instructions}}
+            {"type": "session.update", "session": {"instructions": temp_instructions}}
         )
         time.sleep(0.5)
 
@@ -520,8 +513,7 @@ class InterviewClientV2:
                 audio_data = self.recorder.get_audio()
                 if audio_data:
                     encoded = base64.b64encode(audio_data).decode("ascii")
-                    event = {"type": "input_audio_buffer.append",
-                             "audio": encoded}
+                    event = {"type": "input_audio_buffer.append", "audio": encoded}
                     self._send_event(event)
                 else:
                     time.sleep(0.01)

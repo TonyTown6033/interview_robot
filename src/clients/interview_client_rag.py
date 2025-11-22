@@ -101,6 +101,7 @@ FORMAT = pyaudio.paInt16
 
 class ConnectionState(Enum):
     """连接状态"""
+
     DISCONNECTED = "disconnected"
     CONNECTING = "connecting"
     CONNECTED = "connected"
@@ -130,8 +131,7 @@ class AudioPlayer:
                 frames_per_buffer=CHUNK_SIZE,
             )
             self.playing = True
-            self.play_thread = threading.Thread(
-                target=self._play_loop, daemon=True)
+            self.play_thread = threading.Thread(target=self._play_loop, daemon=True)
             self.play_thread.start()
 
     def _play_loop(self):
@@ -201,15 +201,13 @@ class AudioRecorder:
                 frames_per_buffer=CHUNK_SIZE,
             )
             self.recording = True
-            self.record_thread = threading.Thread(
-                target=self._record_loop, daemon=True)
+            self.record_thread = threading.Thread(target=self._record_loop, daemon=True)
             self.record_thread.start()
 
     def _record_loop(self):
         while self.recording:
             try:
-                audio_data = self.stream.read(
-                    CHUNK_SIZE, exception_on_overflow=False)
+                audio_data = self.stream.read(CHUNK_SIZE, exception_on_overflow=False)
                 self.audio_queue.put(audio_data)
             except Exception as e:
                 if self.recording:
@@ -245,10 +243,7 @@ class ConversationContext:
 
     def add_qa(self, question: str, answer: str):
         """添加问答记录"""
-        self.qa_history.append({
-            "question": question,
-            "answer": answer
-        })
+        self.qa_history.append({"question": question, "answer": answer})
         # 保持历史记录不超过上限
         if len(self.qa_history) > self.max_history:
             self.qa_history.pop(0)
@@ -324,6 +319,10 @@ class RAGInterviewClient:
         # 同步事件
         self.answer_received = threading.Event()
         self.ai_finished_speaking = threading.Event()
+
+        # 连接质量监控
+        self.connection_errors = 0
+        self.last_message_time = time.time()
 
     def connect(self):
         """建立 WebSocket 连接"""
@@ -422,10 +421,8 @@ class RAGInterviewClient:
         self.recorder.start()
 
         # 启动接收和发送线程
-        self.receive_thread = threading.Thread(
-            target=self._receive_loop, daemon=True)
-        self.send_thread = threading.Thread(
-            target=self._send_loop, daemon=True)
+        self.receive_thread = threading.Thread(target=self._receive_loop, daemon=True)
+        self.send_thread = threading.Thread(target=self._send_loop, daemon=True)
 
         self.receive_thread.start()
         self.send_thread.start()
@@ -465,9 +462,7 @@ class RAGInterviewClient:
         logger.info(f"\n🔍 检索上下文: {context[:80]}...")
 
         question = self.question_rag.retrieve_next_question(
-            context=context,
-            n_results=3,
-            exclude_asked=True
+            context=context, n_results=3, exclude_asked=True
         )
 
         if question:
@@ -487,10 +482,12 @@ class RAGInterviewClient:
                 "item": {
                     "type": "message",
                     "role": "user",
-                    "content": [{
-                        "type": "input_text",
-                        "text": f"请用友好的语气说：{welcome_msg}"
-                    }],
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": f"请用友好的语气说：{welcome_msg}",
+                        }
+                    ],
                 },
             }
         )
@@ -652,10 +649,12 @@ class RAGInterviewClient:
                 "item": {
                     "type": "message",
                     "role": "user",
-                    "content": [{
-                        "type": "input_text",
-                        "text": f"用简短、自然的方式追问: {followup_text}"
-                    }],
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": f"用简短、自然的方式追问: {followup_text}",
+                        }
+                    ],
                 },
             }
         )
@@ -674,7 +673,9 @@ class RAGInterviewClient:
                     # 更新最后一个回答（Answer 是对象，不是字典）
                     answers = self.session_recorder.answers
                     if answers:
-                        answers[-1].transcript += f" [追问回答: {self.current_transcript}]"
+                        answers[
+                            -1
+                        ].transcript += f" [追问回答: {self.current_transcript}]"
 
         self.waiting_for_answer = False
 
@@ -693,10 +694,12 @@ class RAGInterviewClient:
                 "item": {
                     "type": "message",
                     "role": "user",
-                    "content": [{
-                        "type": "input_text",
-                        "text": f"用友好的语气说：{completion_msg}"
-                    }],
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": f"用友好的语气说：{completion_msg}",
+                        }
+                    ],
                 },
             }
         )
@@ -948,6 +951,7 @@ def main():
     except Exception as e:
         logger.error(f"\n❌ 错误: {e}")
         import traceback
+
         traceback.print_exc()
 
 
