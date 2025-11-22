@@ -12,6 +12,10 @@ import os
 import threading
 import queue
 import time
+import logging
+import sys
+from datetime import datetime
+from pathlib import Path
 from websocket import create_connection, WebSocketConnectionClosedException
 import pyaudio
 from typing import Optional, Dict, Any, List
@@ -23,6 +27,61 @@ from src.core.question_manager import SessionRecorder
 # 配置信息
 API_KEY = os.getenv("STEPFUN_API_KEY", "your-api-key-here")
 WS_URL = "wss://api.stepfun.com/v1/realtime"
+
+
+# ==================== 日志配置 ====================
+def setup_logger(name: str, log_file: Optional[str] = None, level=logging.INFO):
+    """
+    配置日志记录器
+
+    Args:
+        name: logger 名称
+        log_file: 日志文件路径（可选）
+        level: 控制台日志级别
+
+    Returns:
+        配置好的 logger
+    """
+    logger = logging.getLogger(name)
+    # Logger本身设为DEBUG，让handler控制级别
+    logger.setLevel(logging.DEBUG)
+
+    # 避免重复添加 handler
+    if logger.handlers:
+        return logger
+
+    # 格式化器
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%H:%M:%S'
+    )
+
+    # 控制台输出
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(level)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    # 文件输出（如果指定）
+    if log_file:
+        # 确保日志目录存在
+        log_path = Path(log_file)
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        file_handler.setLevel(logging.DEBUG)  # 文件记录更详细的日志
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+    return logger
+
+
+# 创建全局 logger
+logger = setup_logger(
+    'RAGInterview',
+    log_file=f'logs/interview_{datetime.now().strftime("%Y%m%d_%H%M%S")}.log',
+    level=logging.INFO,  # 可以改为 DEBUG 查看更详细信息
+)
 
 
 # 支持的模型
@@ -85,7 +144,7 @@ class AudioPlayer:
                 continue
             except Exception as e:
                 if self.playing:
-                    print(f"❌ 播放错误: {e}")
+                    logger.error(f"❌ 播放错误: {e}")
 
     def add_audio(self, pcm_bytes: bytes):
         try:
@@ -154,7 +213,7 @@ class AudioRecorder:
                 self.audio_queue.put(audio_data)
             except Exception as e:
                 if self.recording:
-                    print(f"❌ 录制错误: {e}")
+                    logger.error(f"❌ 录制错误: {e}")
 
     def get_audio(self) -> Optional[bytes]:
         try:
@@ -271,13 +330,13 @@ class RAGInterviewClient:
         url = f"{WS_URL}?model={self.model}"
         headers = {"Authorization": f"Bearer {self.api_key}"}
 
-        print(f"🔌 正在连接到 {url}...")
+        logger.info(f"🔌 正在连接到 {url}...")
         self.connection_state = ConnectionState.CONNECTING
 
         try:
             self.ws = create_connection(url, header=headers, timeout=10)
             self.connection_state = ConnectionState.CONNECTED
-            print("✅ WebSocket 连接成功！")
+            logger.info(f"✅ WebSocket 连接成功！")
 
             # 初始配置
             self._configure_initial_session()
@@ -323,7 +382,7 @@ class RAGInterviewClient:
             },
         }
         self._send_event(config)
-        print("⚙️  初始会话配置完成（RAG 灵活模式）")
+        logger.info(f"⚙️  初始会话配置完成（RAG 灵活模式）")
 
     def _send_event(self, event: Dict[str, Any]):
         """发送事件"""
@@ -331,30 +390,30 @@ class RAGInterviewClient:
             try:
                 self.ws.send(json.dumps(event))
             except Exception as e:
-                print(f"❌ 发送消息失败: {e}")
+                logger.error(f"❌ 发送消息失败: {e}")
 
     def start_interview(self):
         """开始访谈"""
-        print("\n" + "=" * 60)
-        print("🎤 客户访谈系统 - RAG 增强版（智能 + 灵活）")
-        print("=" * 60)
+        logger.info(f"\n" + "=" * 60)
+        logger.info(f"🎤 客户访谈系统 - RAG 增强版（智能 + 灵活）")
+        logger.info(f"=" * 60)
 
         # 加载和索引问题
         if not self.question_rag.load_and_index_questions():
-            print("❌ 加载问题失败，无法开始访谈")
+            logger.error("❌ 加载问题失败，无法开始访谈")
             return
 
         # 创建会话记录器
         self.session_recorder = SessionRecorder()
 
-        print(f"\n📊 访谈配置:")
-        print(f"   模型: {self.model}")
-        print(f"   问题库大小: {len(self.question_rag.questions)}")
-        print(f"   最多提问数: {self.max_questions}")
-        print(f"   会话ID: {self.session_recorder.session_id}")
-        print(f"   问题选择: RAG 智能检索")
-        print(f"   对话模式: AI 灵活表述")
-        print("\n" + "=" * 60 + "\n")
+        logger.info(f"\n📊 访谈配置:")
+        logger.info(f"   模型: {self.model}")
+        logger.info(f"   问题库大小: {len(self.question_rag.questions)}")
+        logger.info(f"   最多提问数: {self.max_questions}")
+        logger.info(f"   会话ID: {self.session_recorder.session_id}")
+        logger.info(f"   问题选择: RAG 智能检索")
+        logger.info(f"   对话模式: AI 灵活表述")
+        logger.info(f"\n" + "=" * 60 + "\n")
 
         self.running = True
 
@@ -388,7 +447,7 @@ class RAGInterviewClient:
                     if success:
                         self.questions_asked += 1
                 else:
-                    print("✅ 所有相关问题都已提问")
+                    logger.info(f"✅ 所有相关问题都已提问")
                     break
 
             # 访谈完成
@@ -396,14 +455,14 @@ class RAGInterviewClient:
                 self._complete_interview()
 
         except KeyboardInterrupt:
-            print("\n\n⏹️  用户中断访谈")
+            logger.info(f"\n\n⏹️  用户中断访谈")
         finally:
             self.stop()
 
     def _retrieve_next_question(self) -> Optional[Question]:
         """根据上下文检索下一个问题"""
         context = self.context.get_context_summary()
-        print(f"\n🔍 检索上下文: {context[:80]}...")
+        logger.info(f"\n🔍 检索上下文: {context[:80]}...")
 
         question = self.question_rag.retrieve_next_question(
             context=context,
@@ -412,14 +471,14 @@ class RAGInterviewClient:
         )
 
         if question:
-            print(f"✅ 检索到问题 #{question.id}: {question.question}")
+            logger.info(f"✅ 检索到问题 #{question.id}: {question.question}")
 
         return question
 
     def _say_welcome(self):
         """播放欢迎语"""
         welcome_msg = "您好，欢迎参加健康状况咨询。接下来我会问您几个关于健康的问题，请如实回答。"
-        print(f"🤖 欢迎: {welcome_msg}\n")
+        logger.info(f"🤖 欢迎: {welcome_msg}\n")
 
         # 触发 AI 说欢迎语
         self._send_event(
@@ -453,16 +512,18 @@ class RAGInterviewClient:
         self.answer_received.clear()
         self.ai_finished_speaking.clear()
 
-        print(f"\n{'=' * 60}")
-        print(f"📝 进度: {self.questions_asked + 1}/{self.max_questions}")
-        print(f"💭 问题类型: {question.type}")
-        print(f"📋 参考问题: {question.question}")
-        print(f"{'=' * 60}")
-        print("🤖 AI 实际说: ", end="", flush=True)
+        logger.debug(f"🔧 初始化问题状态: waiting_for_answer=True, current_transcript='', events cleared")
+
+        logger.info(f"\n{'=' * 60}")
+        logger.info(f"📝 进度: {self.questions_asked + 1}/{self.max_questions}")
+        logger.info(f"💭 问题类型: {question.type}")
+        logger.info(f"📋 参考问题: {question.question}")
+        logger.info(f"{'=' * 60}")
+        logger.info(f"🤖 AI 实际说: ")
 
         # 等待上一个响应完成
         if self.is_ai_speaking:
-            print("⏳ 等待上一个响应完成...")
+            logger.info(f"⏳ 等待上一个响应完成...")
             self.ai_finished_speaking.wait(timeout=5)
             time.sleep(0.5)
 
@@ -508,14 +569,16 @@ class RAGInterviewClient:
         # 等待 AI 提问完成
         self.ai_finished_speaking.clear()
         self.ai_finished_speaking.wait(timeout=15)
-        print("\n✅ AI提问完成，等待用户回答\n")
+        logger.info(f"\n✅ AI提问完成，等待用户回答\n")
         time.sleep(0.3)
 
         # 等待用户回答
         timeout = 90
+        logger.debug(f"⏳ 开始等待用户回答（超时：{timeout}秒）...")
         if self.answer_received.wait(timeout):
+            logger.debug(f"📨 收到 answer_received 事件，当前转录: '{self.current_transcript}'")
             if self.current_transcript:
-                print(f"\n✅ 已记录回答: {self.current_transcript}")
+                logger.info(f"\n✅ 已记录回答: {self.current_transcript}")
 
                 # 保存记录
                 self.session_recorder.add_answer(
@@ -534,14 +597,17 @@ class RAGInterviewClient:
                 self._check_and_followup(question, self.current_transcript)
 
                 time.sleep(1.0)
+                logger.debug(f"🔧 重置状态: waiting_for_answer=False")
                 self.waiting_for_answer = False
                 return True
             else:
-                print(f"⚠️  未检测到有效回答")
+                logger.warning(f"⚠️  未检测到有效回答 (current_transcript='{self.current_transcript}')")
+                logger.debug(f"🔧 重置状态: waiting_for_answer=False")
                 self.waiting_for_answer = False
                 return False
         else:
-            print(f"⏰ 回答超时")
+            logger.warning(f"⏰ 回答超时（{timeout}秒内未收到回答）")
+            logger.debug(f"🔧 重置状态: waiting_for_answer=False")
             self.waiting_for_answer = False
             return False
 
@@ -551,7 +617,7 @@ class RAGInterviewClient:
         completeness = analyze_answer_completeness(question.question, answer)
 
         if not completeness['is_complete'] and completeness['confidence'] > 0.6:
-            print(f"\n🤔 检测到回答可能不完整: {completeness['reason']}")
+            logger.debug(f"\n🤔 检测到回答可能不完整: {completeness['reason']}")
 
             # 生成追问
             follow_ups = self.question_rag.get_follow_up_questions(
@@ -559,20 +625,23 @@ class RAGInterviewClient:
             )
 
             if follow_ups:
-                print(f"🔄 进行追问...")
+                logger.info(f"🔄 进行追问（不计入问题总数）...")
                 self._do_followup(follow_ups[0])
 
     def _do_followup(self, followup_text: str):
-        """执行追问"""
+        """执行追问（不计入问题总数）"""
         self.waiting_for_answer = True
         self.current_transcript = ""
         self.answer_received.clear()
 
-        print(f"🤖 追问: {followup_text}\n")
+        logger.info(f"\n{'─' * 60}")
+        logger.info(f"💬 追问（属于当前问题的一部分）")
+        logger.info(f"{'─' * 60}")
+        logger.info(f"🤖 追问: {followup_text}\n")
 
         # 确保上一个响应已完成
         if self.is_ai_speaking:
-            print("⏳ 等待 AI 完成当前响应...")
+            logger.info(f"⏳ 等待 AI 完成当前响应...")
             self.ai_finished_speaking.wait(timeout=5)
             time.sleep(0.5)
 
@@ -599,7 +668,7 @@ class RAGInterviewClient:
         # 等待用户回答
         if self.answer_received.wait(60):
             if self.current_transcript:
-                print(f"\n✅ 追问回答: {self.current_transcript}")
+                logger.info(f"\n✅ 追问回答: {self.current_transcript}")
                 # 将追问回答追加到原问题的记录中
                 if self.current_question and self.session_recorder:
                     # 更新最后一个回答（Answer 是对象，不是字典）
@@ -611,12 +680,12 @@ class RAGInterviewClient:
 
     def _complete_interview(self):
         """完成访谈"""
-        print("\n" + "=" * 60)
-        print("✅ 访谈已完成！")
-        print("=" * 60 + "\n")
+        logger.info(f"\n" + "=" * 60)
+        logger.info(f"✅ 访谈已完成！")
+        logger.info(f"=" * 60 + "\n")
 
         completion_msg = "感谢您的配合，健康咨询已完成。祝您身体健康！"
-        print(f"🤖 结束语: {completion_msg}\n")
+        logger.info(f"🤖 结束语: {completion_msg}\n")
 
         self._send_event(
             {
@@ -645,13 +714,30 @@ class RAGInterviewClient:
                 }
             )
 
-        print(f"\n📊 访谈统计:")
-        print(f"   问题库大小: {len(self.question_rag.questions)}")
-        print(f"   实际提问: {self.questions_asked}")
-        print(f"   有效回答: {self.session_recorder.get_answer_count()}")
+        logger.info(f"\n📊 访谈统计:")
+        logger.info(f"   问题库大小: {len(self.question_rag.questions)}")
+        logger.info(f"   主问题数: {self.questions_asked}")
+        logger.info(f"   有效回答: {self.session_recorder.get_answer_count()}")
+
+        # 统计追问次数
+        followup_count = 0
+        if self.session_recorder:
+            for answer in self.session_recorder.answers:
+                if "[追问回答:" in answer.transcript:
+                    followup_count += 1
+
+        if followup_count > 0:
+            logger.info(f"   追问次数: {followup_count} (已自动合并到对应问题)")
+
+        logger.info(f"\n💡 说明:")
+        logger.info(f"   • 主问题: 从知识库检索的核心问题")
+        logger.info(f"   • 追问: 当回答不完整时的补充提问（不单独计数）")
 
     def _send_loop(self):
-        """发送音频数据循环"""
+        """发送音频数据循环（带重试机制）"""
+        error_count = 0
+        max_errors = 5
+
         while self.running:
             try:
                 audio_data = self.recorder.get_audio()
@@ -659,27 +745,49 @@ class RAGInterviewClient:
                     encoded = base64.b64encode(audio_data).decode("ascii")
                     event = {"type": "input_audio_buffer.append", "audio": encoded}
                     self._send_event(event)
+                    error_count = 0  # 成功发送，重置错误计数
                 else:
                     time.sleep(0.01)
             except Exception as e:
+                error_count += 1
                 if self.running:
-                    print(f"❌ 发送错误: {e}")
-                break
+                    logger.error(f"❌ 发送错误 ({error_count}/{max_errors}): {e}")
+                    if error_count >= max_errors:
+                        logger.error("❌ 发送错误过多，停止发送循环")
+                        break
+                    time.sleep(0.5)  # 错误后等待一下再重试
+                else:
+                    break
 
     def _receive_loop(self):
-        """接收响应循环"""
+        """接收响应循环（带重试机制）"""
+        error_count = 0
+        max_errors = 3
+        last_activity = time.time()
+        heartbeat_timeout = 30  # 30秒无活动视为超时
+
         while self.running:
             try:
+                # 检查心跳超时
+                if time.time() - last_activity > heartbeat_timeout:
+                    logger.warning(f"\n⚠️  {heartbeat_timeout}秒无响应，可能连接不稳定")
+                    last_activity = time.time()
+
                 message = self.ws.recv()
                 if not message:
-                    break
+                    logger.warning("\n⚠️  收到空消息")
+                    time.sleep(0.1)
+                    continue
+
+                last_activity = time.time()  # 更新活动时间
+                error_count = 0  # 成功接收，重置错误计数
 
                 event = json.loads(message)
                 event_type = event.get("type")
 
                 if event_type == "session.created":
                     session_id = event.get("session", {}).get("id", "")
-                    print(f"✅ 会话已创建 (ID: {session_id[:8]}...)")
+                    logger.info(f"✅ 会话已创建 (ID: {session_id[:8]}...)")
 
                 elif event_type == "session.updated":
                     pass
@@ -687,19 +795,36 @@ class RAGInterviewClient:
                 elif event_type == "input_audio_buffer.speech_started":
                     self.user_speaking = True
                     if self.waiting_for_answer:
-                        print("🎤 [用户开始回答...]", end="", flush=True)
+                        logger.info(f"🎤 [用户开始回答...]")
 
                 elif event_type == "input_audio_buffer.speech_stopped":
                     self.user_speaking = False
-                    print(" [语音结束]")
+                    logger.info(f" [语音结束]")
 
                 elif event_type == "conversation.item.input_audio_transcription.completed":
-                    transcript = event.get("transcript", "")
-                    if transcript:
-                        if self.waiting_for_answer:
-                            print(f"👤 客户: {transcript}")
-                            self.current_transcript = transcript
-                            self.answer_received.set()
+                    transcript = event.get("transcript", "").strip()
+
+                    # 调试信息：记录收到的转录文本
+                    logger.debug(f"📝 收到转录: '{transcript}' (长度: {len(transcript)} 字符)")
+                    logger.debug(f"   当前状态 - waiting_for_answer: {self.waiting_for_answer}, user_speaking: {self.user_speaking}")
+
+                    # 验证转录文本有效性
+                    if not transcript:
+                        logger.warning("⚠️  收到空转录文本，忽略")
+                        continue
+
+                    # 检查是否太短（可能是误触发）
+                    if len(transcript) < 2:
+                        logger.warning(f"⚠️  转录文本过短 ({len(transcript)} 字符)，可能是误触发，忽略: '{transcript}'")
+                        continue
+
+                    if self.waiting_for_answer:
+                        logger.info(f"👤 客户: {transcript}")
+                        logger.debug(f"✅ 设置 answer_received 事件")
+                        self.current_transcript = transcript
+                        self.answer_received.set()
+                    else:
+                        logger.debug(f"⏭️  当前不在等待回答状态，忽略转录: '{transcript}'")
 
                 elif event_type == "response.created":
                     self.is_ai_speaking = True
@@ -707,10 +832,10 @@ class RAGInterviewClient:
                 elif event_type == "response.text.delta":
                     text_delta = event.get("delta", "")
                     if text_delta:
-                        print(text_delta, end="", flush=True)
+                        logger.info(text_delta)
 
                 elif event_type == "response.text.done":
-                    print()
+                    logger.info("")
 
                 elif event_type == "response.audio.delta":
                     if self.is_ai_speaking and not self.user_speaking:
@@ -725,21 +850,45 @@ class RAGInterviewClient:
 
                 elif event_type == "error":
                     error_data = event.get("error", {})
-                    print(f"\n❌ 错误: {error_data}")
+                    error_msg = error_data.get("message", "Unknown error")
+                    error_type = error_data.get("type", "")
+                    logger.error(f"\n❌ API 错误 [{error_type}]: {error_msg}")
+
+                    # 特殊处理某些错误
+                    if "ongoing response" in error_msg:
+                        logger.info(f"   → 提示: 上一个响应未完成，已自动处理")
+                        # 等待一下让响应完成
+                        time.sleep(1)
 
             except WebSocketConnectionClosedException:
-                print("\n❌ WebSocket 连接已关闭")
-                self.running = False
-                break
+                error_count += 1
+                logger.error(f"\n❌ WebSocket 连接已关闭 ({error_count}/{max_errors})")
+                if error_count >= max_errors or not self.running:
+                    self.running = False
+                    break
+                else:
+                    logger.info(f"   → 尝试恢复连接...")
+                    time.sleep(2)
+
+            except json.JSONDecodeError as e:
+                logger.error(f"\n⚠️  JSON 解析错误: {e}")
+                continue
+
             except Exception as e:
+                error_count += 1
                 if self.running:
-                    print(f"\n❌ 接收错误: {e}")
-                self.running = False
-                break
+                    logger.error(f"\n❌ 接收错误 ({error_count}/{max_errors}): {e}")
+                    if error_count >= max_errors:
+                        logger.error("   → 错误过多，停止接收")
+                        self.running = False
+                        break
+                    time.sleep(1)
+                else:
+                    break
 
     def stop(self):
         """停止访谈"""
-        print("\n🛑 正在停止...")
+        logger.info(f"\n🛑 正在停止...")
         self.running = False
 
         self.recorder.stop()
@@ -757,29 +906,29 @@ class RAGInterviewClient:
                 pass
 
         self.connection_state = ConnectionState.DISCONNECTED
-        print("👋 访谈已结束")
+        logger.info(f"👋 访谈已结束")
 
 
 def main():
     """主函数"""
-    print("\n🚀 客户访谈系统 - RAG 增强版")
-    print("=" * 60)
+    logger.info(f"\n🚀 客户访谈系统 - RAG 增强版")
+    logger.info(f"=" * 60)
 
     # 检查 API Key
     if API_KEY == "your-api-key-here":
-        print("⚠️  请先设置环境变量 STEPFUN_API_KEY")
-        print("export STEPFUN_API_KEY='your-actual-api-key'")
+        logger.warning("⚠️  请先设置环境变量 STEPFUN_API_KEY")
+        logger.info(f"export STEPFUN_API_KEY='your-actual-api-key'")
         return
 
     # 检查音频设备
     try:
         audio = pyaudio.PyAudio()
-        print(f"🎵 音频设备初始化成功")
-        print(f"   输入设备: {audio.get_default_input_device_info()['name']}")
-        print(f"   输出设备: {audio.get_default_output_device_info()['name']}")
+        logger.info(f"🎵 音频设备初始化成功")
+        logger.info(f"   输入设备: {audio.get_default_input_device_info()['name']}")
+        logger.info(f"   输出设备: {audio.get_default_output_device_info()['name']}")
         audio.terminate()
     except Exception as e:
-        print(f"❌ 音频设备初始化失败: {e}")
+        logger.error(f"❌ 音频设备初始化失败: {e}")
         return
 
     # 创建 RAG 增强访谈客户端
@@ -797,7 +946,7 @@ def main():
         client.connect()
         client.start_interview()
     except Exception as e:
-        print(f"\n❌ 错误: {e}")
+        logger.error(f"\n❌ 错误: {e}")
         import traceback
         traceback.print_exc()
 
