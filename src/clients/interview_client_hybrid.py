@@ -18,7 +18,8 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 from enum import Enum
 
-from question_manager import QuestionManager, SessionRecorder, Question
+from src.core.question_manager import QuestionManager, SessionRecorder, Question
+from src.analyzers.health_analyzer_client import HealthAnalyzerClient
 
 # 配置信息
 API_KEY = os.getenv("STEPFUN_API_KEY", "your-api-key-here")
@@ -239,6 +240,9 @@ class HybridInterviewClient:
         self.tts_generator = TTSGenerator(api_key)
         self.tts_generator.tts_model = tts_model
         self.tts_generator.tts_voice = tts_voice
+
+        # 健康分析客户端
+        self.health_analyzer = HealthAnalyzerClient(api_key)
 
         # 当前问题状态
         self.current_question: Optional[Question] = None
@@ -482,6 +486,53 @@ class HybridInterviewClient:
                 }
             )
 
+            # 生成 AI 健康分析报告
+            self._generate_health_analysis()
+
+    def _generate_health_analysis(self):
+        """生成健康分析报告"""
+        if not self.session_recorder or self.session_recorder.get_answer_count() == 0:
+            print("⚠️  没有回答记录，跳过健康分析")
+            return
+
+        print("\n" + "=" * 70)
+        print("🤖 正在生成 AI 健康分析报告...")
+        print("=" * 70)
+
+        try:
+            # 准备分析数据
+            answers = self.session_recorder.get_answers_for_analysis()
+            questions_count = len(self.question_manager.questions)
+
+            # 调用 AI 分析
+            analysis_result = self.health_analyzer.analyze_interview(
+                answers, questions_count
+            )
+
+            if "error" in analysis_result:
+                print(f"\n❌ AI 分析失败: {analysis_result.get('message', '未知错误')}")
+                return
+
+            # 格式化报告
+            formatted_report = self.health_analyzer.format_report(
+                analysis_result)
+
+            # 显示报告
+            print("\n" + formatted_report)
+
+            # 保存报告
+            self.session_recorder.save_analysis_report(
+                analysis_result, formatted_report
+            )
+
+            print("\n✅ 健康分析报告生成完成！")
+
+        except Exception as e:
+            print(f"\n❌ 生成健康分析报告时出错: {e}")
+            import traceback
+
+            traceback.print_exc()
+
     def _send_loop(self):
         """发送音频数据循环"""
         while self.running:
@@ -613,7 +664,7 @@ def main():
         model=ModelType.STEP_AUDIO_2.value,
         vad_threshold=0.7,  # 降低灵敏度，避免误触发（你可以根据实际情况调整 0.6-0.8）
         vad_silence_duration_ms=800,  # 稍微增加静音容忍时间
-        tts_voice="cixingnansheng",  # 音色选项见下方注释
+        tts_voice="wenrounvsheng",  # 音色选项见下方注释
         tts_model="step-tts-mini",  # step-tts-mini 或 step-tts-vivid
     )
 

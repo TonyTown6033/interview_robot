@@ -219,6 +219,45 @@ class SessionRecorder:
     def get_answer_count(self) -> int:
         """获取已回答的问题数"""
         return len(self.answers)
+    
+    def save_analysis_report(self, analysis_result: dict, formatted_report: str):
+        """
+        保存 AI 分析报告
+        
+        Args:
+            analysis_result: AI 分析的原始 JSON 结果
+            formatted_report: 格式化后的文本报告
+        """
+        session_dir = self.session_dir
+        
+        # 保存 JSON 格式的分析结果
+        analysis_json_file = session_dir / "health_analysis.json"
+        with open(analysis_json_file, 'w', encoding='utf-8') as f:
+            json.dump(analysis_result, f, ensure_ascii=False, indent=2)
+        
+        print(f"🤖 AI 分析结果已保存: {analysis_json_file}")
+        
+        # 保存格式化的文本报告
+        report_file = session_dir / "health_report.txt"
+        with open(report_file, 'w', encoding='utf-8') as f:
+            f.write(formatted_report)
+        
+        print(f"📋 健康报告已保存: {report_file}")
+    
+    def get_answers_for_analysis(self) -> list:
+        """
+        获取适合 AI 分析的问答数据格式
+        
+        Returns:
+            格式化的问答列表
+        """
+        return [
+            {
+                "question": ans.question_text,
+                "answer": ans.transcript
+            }
+            for ans in self.answers
+        ]
 
 
 def main():

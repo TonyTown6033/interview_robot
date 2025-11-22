@@ -1,9 +1,21 @@
 [project]
 name = "questionagent"
-version = "0.2.0"
-description = "基于实时语音对话的客户问答采集系统"
+version = "1.0.0"
+description = "基于阶跃星辰 Realtime API 的智能语音访谈系统"
 readme = "README.md"
 requires-python = ">=3.11"
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+license = {text = "MIT"}
+keywords = ["interview", "voice", "ai", "stepfun"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+]
 dependencies = [
     "websocket-client>=1.9.0",
     "soundfile>=0.12.1",
@@ -13,4 +25,19 @@ dependencies = [
     "requests>=2.31.0",
     "scipy>=1.11.0",
 ]
+
+[project.scripts]
+questionagent = "main:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/questionAgent"
+Documentation = "https://github.com/yourusername/questionAgent/blob/master/README.md"
+Repository = "https://github.com/yourusername/questionAgent"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
 
