@@ -1,0 +1,154 @@
+# RAG 增强访谈问题库示例
+# 支持扩展字段以增强语义检索和智能追问
+
+questions:
+  # 基础健康状况
+  - id: 1
+    question: "您好，请问您最近的身体状况如何？有没有感到不适？"
+    type: "open"
+    category: "基础健康"
+    keywords: ["健康状况", "身体", "不适", "症状"]
+    follow_up_hints:
+      - "能详细说说是哪方面的不适吗？"
+      - "这种情况持续多久了？"
+
+  # 睡眠相关
+  - id: 2
+    question: "您平时的睡眠质量怎么样？每天大概睡几个小时？"
+    type: "open"
+    category: "生活习惯"
+    keywords: ["睡眠", "休息", "失眠", "睡眠质量"]
+    follow_up_hints:
+      - "是入睡困难还是容易醒？"
+      - "睡不好有多长时间了？"
+
+  - id: 3
+    question: "您晚上几点睡觉？早上几点起床？"
+    type: "open"
+    category: "生活习惯"
+    keywords: ["作息", "睡眠时间", "起床", "就寝"]
+    follow_up_hints:
+      - "周末的作息时间会有变化吗？"
+
+  # 运动健康
+  - id: 4
+    question: "您有定期运动的习惯吗？一般做什么类型的运动？"
+    type: "open"
+    category: "生活习惯"
+    keywords: ["运动", "锻炼", "健身", "活动"]
+    follow_up_hints:
+      - "每周运动几次呢？"
+      - "每次运动多长时间？"
+
+  - id: 5
+    question: "您平时走路或爬楼梯会觉得累吗？"
+    type: "open"
+    category: "基础健康"
+    keywords: ["体力", "疲劳", "运动能力"]
+    follow_up_hints:
+      - "会不会气喘或心跳加快？"
+
+  # 饮食相关
+  - id: 6
+    question: "您的饮食习惯如何？是否注意营养均衡？"
+    type: "open"
+    category: "生活习惯"
+    keywords: ["饮食", "营养", "饮食习惯", "吃饭"]
+    follow_up_hints:
+      - "一日三餐规律吗？"
+      - "会经常吃外卖或快餐吗？"
+
+  - id: 7
+    question: "您平时喝水多吗？每天大概喝多少水？"
+    type: "open"
+    category: "生活习惯"
+    keywords: ["喝水", "水分", "饮水"]
+    follow_up_hints:
+      - "会主动喝水还是只有渴了才喝？"
+
+  # 疾病与用药
+  - id: 8
+    question: "您目前是否在服用任何药物？或者有慢性疾病需要管理？"
+    type: "open"
+    category: "医疗健康"
+    keywords: ["药物", "疾病", "慢性病", "治疗"]
+    follow_up_hints:
+      - "这些药物服用多久了？"
+      - "有按时服药吗？"
+
+  - id: 9
+    question: "您的家人有没有糖尿病、高血压这类疾病？"
+    type: "open"
+    category: "医疗健康"
+    keywords: ["家族史", "遗传", "糖尿病", "高血压"]
+    follow_up_hints:
+      - "是直系亲属吗？"
+
+  # 心理压力
+  - id: 10
+    question: "您平时工作压力大吗？如何缓解压力？"
+    type: "open"
+    category: "心理健康"
+    keywords: ["压力", "工作压力", "焦虑", "放松"]
+    follow_up_hints:
+      - "会因为压力影响睡眠或食欲吗？"
+      - "有什么减压的爱好吗？"
+
+  - id: 11
+    question: "您最近心情怎么样？会感到焦虑或抑郁吗？"
+    type: "open"
+    category: "心理健康"
+    keywords: ["心情", "情绪", "焦虑", "抑郁", "心理"]
+    follow_up_hints:
+      - "这种感觉经常出现吗？"
+      - "会影响到日常生活吗？"
+
+  # 体检与健康管理
+  - id: 12
+    question: "您最近有做过体检吗？有没有发现需要关注的健康指标？"
+    type: "open"
+    category: "医疗健康"
+    keywords: ["体检", "检查", "健康指标", "报告"]
+    follow_up_hints:
+      - "体检报告有哪些异常吗？"
+      - "医生有什么建议吗？"
+
+  - id: 13
+    question: "您对自己的体重满意吗？最近体重有变化吗？"
+    type: "open"
+    category: "基础健康"
+    keywords: ["体重", "体重变化", "肥胖", "消瘦"]
+    follow_up_hints:
+      - "是增重还是减重？"
+      - "是刻意控制的还是自然变化？"
+
+  # 生活习惯细节
+  - id: 14
+    question: "您抽烟或喝酒吗？"
+    type: "open"
+    category: "生活习惯"
+    keywords: ["抽烟", "喝酒", "烟酒", "不良习惯"]
+    follow_up_hints:
+      - "如果抽烟，每天多少支？"
+      - "如果喝酒，多久喝一次？"
+
+  - id: 15
+    question: "您每天使用电子设备（手机、电脑）的时间有多长？"
+    type: "open"
+    category: "生活习惯"
+    keywords: ["电子设备", "手机", "电脑", "屏幕时间"]
+    follow_up_hints:
+      - "会感到眼睛疲劳吗？"
+      - "会影响睡眠吗？"
+
+settings:
+  welcome_message: "您好，欢迎参加健康状况咨询。接下来我会问您一些关于健康的问题，请如实回答。这个访谈会根据您的回答智能调整，大约需要10-15分钟。"
+  completion_message: "感谢您的配合，健康咨询已完成。根据您的回答，我们会生成一份健康分析报告。祝您身体健康！"
+  save_transcript: true
+
+# RAG 配置（可选）
+rag_settings:
+  max_questions: 10              # 每次访谈最多问几个问题
+  min_answer_length: 10          # 最短回答长度（字符数）
+  followup_threshold: 0.6        # 追问置信度阈值
+  context_window: 3              # 上下文窗口大小（最近几轮对话）

@@ -57,7 +57,7 @@ class TTSGenerator:
         self.cache_dir = Path("tts_cache")
         self.cache_dir.mkdir(exist_ok=True)
         self.tts_model = "step-tts-mini"  # 默认模型
-        self.tts_voice = "cixingnansheng"  # 默认音色
+        self.tts_voice = "tianmeinvsheng"  # 默认音色
 
     def generate_speech(self, text: str, question_id: int) -> Optional[Path]:
         """
